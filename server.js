@@ -65,7 +65,7 @@ app.post('/posts',(req,res) => {
       .findById(req.body.author_id)
       //resolve if author iD matches
       .then(author)
-      console.log(`author is ${author}`)
+      //.then(author => console.log(author))
         //if it does exist
         if(author){
           //create the post using the Blog Schema
@@ -73,6 +73,7 @@ app.post('/posts',(req,res) => {
           .create({
               title: req.body.title,
               content: req.body.content,
+              //remember in the model, the author is id not author._id
               author: req.body.id,
           })
           //then return back to the client side with a 201 status code
@@ -82,13 +83,19 @@ app.post('/posts',(req,res) => {
               content: blogPost.content,
               author: `${blogPost.author.firstName} ${blogPost.author.lastName}`,
               comments: blogPost.comments}
-          ))
-          .catch(err =>{
-              console.error(err);
-              res.status(400).json({error: `Internal server error`})
-          });
-        }
-});
+          ));
+          }
+          else{
+            const message = `Author not found`;
+            console.error(message);
+            res.status(400).send(message);
+          }
+        })
+        
+      .catch(err =>{
+        console.error(err);
+        res.status(400).json({error: `Internal server error`})
+    });
 
 app.put('/posts/:id', (req,res) => {
 
@@ -162,10 +169,12 @@ app.post('/authors', (req,res) => {
   Author
     //dont forget that when .find() finds all
     //When looking for a particular item, it takes in objects
+
+    //if we are able to find a document with the userName, it means the userName is already taken
     .findOne({userName: req.body.userName})
     //returns all the documents, IN THIS CASE, its returning only one since the .find() is looking for a particular document
     .then(authors => {
-      //If author statement holds true, dont forget you don't need to compare types/data, you can use if loops to see if it holds
+      // dont forget you don't need to compare types/data, you can use if loops to see if it holds true or false
       //If author statement holds true, means that the username is already in the database, respond with error message
       if(authors){
         let message = `username already taken`;
@@ -195,6 +204,7 @@ app.post('/authors', (req,res) => {
       }
     })  
 })
+
 app.put('/authors/:id', (req,res) => {
   if(!(req.params.id && req.body.id && req.params.id === req.body.id)){
     const message = `Request path id and request body id values must match`;
